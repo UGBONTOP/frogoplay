@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+	<title>Web Dashers</title>
+	<link rel="icon" type="image/x-icon" href="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/favicon.ico">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/style.css">
+
+	<meta property="og:title" content="Web Dash"/>
+	<meta property="og:description" content="A mod of geometrydash.com!"/>
+	<meta property="og:image" content="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/logo.png"/>
+	<meta property="og:url" content="https://web-dashers.github.io/"/>
+
+
+	<meta name="twitter:card" content="summary_large_image"/>
+	<meta name="twitter:title" content="Web Dash"/>
+	<meta name="twitter:description" content="A mod of geometrydash.com!"/>
+	<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/logo.png"/>
+
+	<script>
+		(function() {
+			const CDN = "https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main";
+
+			function rewrite(url) {
+				if (typeof url !== "string") return url;
+				// Match relative paths like "assets/..." or absolute file:// paths containing /assets/
+				const m = url.match(/(?:^|.*[\/\\])(assets\/.+)/);
+				if (m) return CDN + "/" + m[1];
+				return url;
+			}
+			const _open = XMLHttpRequest.prototype.open;
+			XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+				return _open.call(this, method, rewrite(url), ...rest);
+			};
+
+			const _fetch = window.fetch;
+			window.fetch = function(input, init) {
+				if (typeof input === "string") {
+					input = rewrite(input);
+				} else if (input instanceof Request) {
+					const newUrl = rewrite(input.url);
+					if (newUrl !== input.url) input = new Request(newUrl, input);
+				}
+				return _fetch.call(this, input, init);
+			};
+
+			const _imgDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+			Object.defineProperty(HTMLImageElement.prototype, "src", {
+				set(val) { _imgDesc.set.call(this, rewrite(val)); },
+				get() { return _imgDesc.get.call(this); }
+			});
+
+		})();
+	</script>
+
+
+	<script src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/game/allObjects.js?latest"></script>
+	<script src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/game/allLevels.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/libs/phaser.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/libs/pako.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/utils/cache-manager.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/api/GDapiWrapper.js"></script>
+
+	<script>window._gdProxyUrl = "https://gd-proxy.gmdc.workers.dev";</script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/utils/config.js"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/triggers.js"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/level.js?latest"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/player.js"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/audio.js"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/loading-screen.js"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/game-scene.js?latest"></script>
+	<script defer src="https://cdn.jsdelivr.net/gh/UGBONTOP/webdasherssinglefilev2@main/assets/scripts/core/main.js"></script>
+	<script>
+		new ResizeObserver(() => {
+			window.dispatchEvent(new Event('resize'));
+		}).observe(document.documentElement);
+
+		document.oncontextmenu = (event) => {
+			event.preventDefault();
+		};
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>

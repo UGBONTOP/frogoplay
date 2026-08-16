@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Snake - GB Edition</title>
+    <style>
+        :root {
+            --gb-darkest: #0f380f;
+            --gb-dark: #306230;
+            --gb-light: #8bac0f;
+            --gb-lightest: #9bbc0f;
+        }
+
+        body {
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Game Boy Shell */
+        #game-container {
+            background-color: #999;
+            padding: 40px 20px 60px 20px;
+            border-radius: 10px 10px 50px 10px;
+            box-shadow: inset -5px -5px 0px #666, 10px 10px 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* The Screen */
+        #screen {
+            background-color: var(--gb-lightest);
+            border: 15px solid #555;
+            outline: 5px solid #333;
+            width: 320px;
+            position: relative;
+            image-rendering: pixelated;
+        }
+
+        canvas {
+            display: block;
+            background-color: var(--gb-lightest);
+        }
+
+        #ui {
+            padding: 10px;
+            color: var(--gb-darkest);
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            border-bottom: 2px solid var(--gb-dark);
+        }
+
+        /* Menu Overlay */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--gb-lightest);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .menu-btn {
+            background: var(--gb-dark);
+            color: var(--gb-lightest);
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .menu-btn:hover {
+            background: var(--gb-darkest);
+        }
+
+        h1 { color: var(--gb-darkest); margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="screen">
+        <div id="ui">
+            <span>SCORE: <span id="score">0</span></span>
+            <span id="mode-label">NORMAL</span>
+        </div>
+        
+        <canvas id="snakeGame" width="320" height="320"></canvas>
+
+        <div id="overlay">
+            <h1>SNAKE GB</h1>
+            <p>Select Mode:</p>
+            <button class="menu-btn" onclick="startGame('normal')">NORMAL</button>
+            <button class="menu-btn" onclick="startGame('speed')">FAST</button>
+            <button class="menu-btn" onclick="startGame('wrap')">NO WALLS</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById("snakeGame");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const overlay = document.getElementById("overlay");
+    const modeLabel = document.getElementById("mode-label");
+
+    const grid = 16;
+    let count = 0;
+    let score = 0;
+    let gameMode = 'normal';
+    let gameSpeed = 7; // Frames to skip (higher is slower)
+
+    let snake = {
+        x: 160,
+        y: 160,
+        dx: grid,
+        dy: 0,
+        cells: [],
+        maxCells: 4
+    };
+
+    let apple = { x: 32, y: 32 };
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    function startGame(mode) {
+        gameMode = mode;
+        score = 0;
+        scoreEl.innerText = score;
+        modeLabel.innerText = mode.toUpperCase();
+        overlay.style.display = "none";
+        
+        // Reset Snake
+        snake.x = 160;
+        snake.y = 160;
+        snake.cells = [];
+        snake.maxCells = 4;
+        snake.dx = grid;
+        snake.dy = 0;
+        
+        gameSpeed = mode === 'speed' ? 4 : 7;
+        
+        requestAnimationFrame(loop);
+    }
+
+    function loop() {
+        if (overlay.style.display === "flex") return;
+
+        const animationId = requestAnimationFrame(loop);
+
+        if (++count < gameSpeed) {
+            return;
+        }
+        count = 0;
+
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        // Move snake
+        snake.x += snake.dx;
+        snake.y += snake.dy;
+
+        // Wall Logic
+        if (gameMode === 'wrap') {
+            if (snake.x < 0) snake.x = canvas.width - grid;
+            else if (snake.x >= canvas.width) snake.x = 0;
+            if (snake.y < 0) snake.y = canvas.height - grid;
+            else if (snake.y >= canvas.height) snake.y = 0;
+        } else {
+            if (snake.x < 0 || snake.x >= canvas.width || snake.y < 0 || snake.y >= canvas.height) {
+                gameOver();
+            }
+        }
+
+        // Keep track of where snake has been
+        snake.cells.unshift({x: snake.x, y: snake.y});
+
+        // Remove cells as we move away from them
+        if (snake.cells.length > snake.maxCells) {
+            snake.cells.pop();
+        }
+
+        // Draw Apple
+        ctx.fillStyle = '#306230'; // GB Dark
+        ctx.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+        // Draw Snake
+        ctx.fillStyle = '#0f380f'; // GB Darkest
+        snake.cells.forEach(function(cell, index) {
+            ctx.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+            // Check collision with self
+            if (index > 0 && cell.x === snake.x && cell.y === snake.y) {
+                gameOver();
+            }
+
+            // Check collision with apple
+            if (cell.x === apple.x && cell.y === apple.y) {
+                snake.maxCells++;
+                score += 10;
+                scoreEl.innerText = score;
+                apple.x = getRandomInt(0, 20) * grid;
+                apple.y = getRandomInt(0, 20) * grid;
+            }
+        });
+    }
+
+    function gameOver() {
+        overlay.style.display = "flex";
+        overlay.querySelector('h1').innerText = "GAME OVER";
+    }
+
+    document.addEventListener('keydown', function(e) {
+        // Prevent snake from reversing on itself
+        if (e.which === 37 && snake.dx === 0) { snake.dx = -grid; snake.dy = 0; }
+        else if (e.which === 38 && snake.dy === 0) { snake.dy = -grid; snake.dx = 0; }
+        else if (e.which === 39 && snake.dx === 0) { snake.dx = grid; snake.dy = 0; }
+        else if (e.which === 40 && snake.dy === 0) { snake.dy = grid; snake.dx = 0; }
+    });
+</script>
+
+</body>
+</html>
